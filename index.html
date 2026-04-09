@@ -304,14 +304,8 @@
         }
 
         case 'clear': {
-          if (clearBtn.textContent === 'C') {
-            state.current    = '0';
-            state.hasDecimal = false;
-            state.justCalc   = false;
-          } else {
-            reset();
-            clearHighlight();
-          }
+          reset();
+          clearHighlight();
           break;
         }
 
