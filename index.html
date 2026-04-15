@@ -133,6 +133,171 @@
     .btn-num:hover   { background: #4a4a4a; }
     .btn-op:hover    { background: #e04535; }
     .btn-op.active:hover { background: #ffe; }
+
+    /* BMI 按钮 */
+    .btn-bmi {
+      grid-column: span 4;
+      height: 56px;
+      background: #1c1c1e;
+      border: 1px solid #3a3a3c;
+      color: #fff;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      border-radius: 18px;
+      margin-top: 4px;
+    }
+    .btn-bmi:hover { background: #2c2c2e; }
+
+    /* BMI 面板 */
+    .bmi-panel {
+      display: none;
+      flex-direction: column;
+      padding: 10px 8px 8px;
+      gap: 14px;
+    }
+    .bmi-panel.active { display: flex; }
+
+    .bmi-title {
+      color: #fff;
+      font-size: 22px;
+      font-weight: 600;
+      text-align: center;
+      letter-spacing: 1px;
+      padding: 6px 0 2px;
+    }
+    .bmi-subtitle {
+      color: #888;
+      font-size: 13px;
+      text-align: center;
+      margin-top: -8px;
+    }
+
+    .bmi-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .bmi-input-wrap {
+      display: flex;
+      align-items: center;
+      background: #1c1c1e;
+      border: 1px solid #3a3a3c;
+      border-radius: 14px;
+      padding: 0 16px;
+      height: 56px;
+    }
+    .bmi-input-wrap:focus-within {
+      border-color: #c0392b;
+    }
+    .bmi-label {
+      color: #aaa;
+      font-size: 15px;
+      width: 48px;
+      flex-shrink: 0;
+    }
+    .bmi-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 22px;
+      font-weight: 300;
+      text-align: right;
+      font-family: inherit;
+    }
+    .bmi-unit {
+      color: #666;
+      font-size: 15px;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    .bmi-confirm {
+      height: 56px;
+      background: #c0392b;
+      color: #fff;
+      border: none;
+      border-radius: 18px;
+      font-size: 20px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: filter 0.1s, transform 0.08s;
+      font-family: inherit;
+    }
+    .bmi-confirm:hover   { filter: brightness(1.15); }
+    .bmi-confirm:active  { transform: scale(0.96); }
+
+    /* BMI 结果面板 */
+    .bmi-result-panel {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 8px 8px;
+      gap: 16px;
+    }
+    .bmi-result-panel.active { display: flex; }
+
+    .bmi-result-value {
+      font-size: 86px;
+      font-weight: 200;
+      color: #fff;
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+    .bmi-result-label {
+      font-size: 28px;
+      font-weight: 500;
+      padding: 6px 24px;
+      border-radius: 30px;
+    }
+    .bmi-result-label.thin    { background: #2980b9; color: #fff; }
+    .bmi-result-label.normal  { background: #27ae60; color: #fff; }
+    .bmi-result-label.over    { background: #e67e22; color: #fff; }
+    .bmi-result-label.obese   { background: #c0392b; color: #fff; }
+
+    .bmi-result-desc {
+      color: #888;
+      font-size: 14px;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .bmi-result-range {
+      display: flex;
+      width: 100%;
+      gap: 6px;
+      margin-top: -4px;
+    }
+    .bmi-range-item {
+      flex: 1;
+      padding: 8px 4px;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 11px;
+      color: #fff;
+      opacity: 0.5;
+    }
+    .bmi-range-item.highlight { opacity: 1; transform: scale(1.05); }
+    .bmi-range-item.thin-bg   { background: #2980b9; }
+    .bmi-range-item.normal-bg { background: #27ae60; }
+    .bmi-range-item.over-bg   { background: #e67e22; }
+    .bmi-range-item.obese-bg  { background: #c0392b; }
+
+    .bmi-back {
+      width: 100%;
+      height: 52px;
+      background: #1c1c1e;
+      border: 1px solid #3a3a3c;
+      color: #fff;
+      border-radius: 18px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: filter 0.1s;
+      font-family: inherit;
+      margin-top: 4px;
+    }
+    .bmi-back:hover { background: #2c2c2e; }
   </style>
 </head>
 <body>
@@ -166,6 +331,43 @@
       <button class="btn btn-num btn-zero" data-action="num" data-num="0">0</button>
       <button class="btn btn-num"  data-action="dot">.</button>
       <button class="btn btn-op"   data-action="equal">=</button>
+      <!-- BMI 按钮 -->
+      <button class="btn btn-bmi" id="bmiBtn">BMI 身体质量指数</button>
+    </div>
+
+    <!-- BMI 输入面板 -->
+    <div class="bmi-panel" id="bmiPanel">
+      <div class="bmi-title">BMI 计算</div>
+      <div class="bmi-subtitle">身体质量指数</div>
+      <div class="bmi-input-group">
+        <div class="bmi-input-wrap">
+          <span class="bmi-label">身高</span>
+          <input class="bmi-input" id="heightInput" type="number" placeholder="0.00" min="0.5" max="3" step="0.01" inputmode="decimal" />
+          <span class="bmi-unit">m</span>
+        </div>
+        <div class="bmi-input-wrap">
+          <span class="bmi-label">体重</span>
+          <input class="bmi-input" id="weightInput" type="number" placeholder="0.0" min="1" max="500" step="0.1" inputmode="decimal" />
+          <span class="bmi-unit">kg</span>
+        </div>
+      </div>
+      <button class="bmi-confirm" id="bmiConfirm">确 定</button>
+      <button class="bmi-back" id="bmiBack1">← 返回计算器</button>
+    </div>
+
+    <!-- BMI 结果面板 -->
+    <div class="bmi-result-panel" id="bmiResultPanel">
+      <div class="bmi-title">BMI 结果</div>
+      <div class="bmi-result-value" id="bmiValue">--</div>
+      <div class="bmi-result-label" id="bmiResultLabel">--</div>
+      <div class="bmi-result-desc" id="bmiResultDesc"></div>
+      <div class="bmi-result-range">
+        <div class="bmi-range-item thin-bg"   id="range0"><div>偏轻</div><div>&lt;18.5</div></div>
+        <div class="bmi-range-item normal-bg" id="range1"><div>正常</div><div>18.5-23.9</div></div>
+        <div class="bmi-range-item over-bg"   id="range2"><div>超重</div><div>24-27.9</div></div>
+        <div class="bmi-range-item obese-bg"  id="range3"><div>肥胖</div><div>≥28</div></div>
+      </div>
+      <button class="bmi-back" id="bmiBack2">← 返回计算器</button>
     </div>
   </div>
 
@@ -439,6 +641,75 @@
     });
 
     updateDisplay();
+
+    // ===== BMI 功能 =====
+    const calcDisplay  = document.querySelector('.display');
+    const calcButtons  = document.querySelector('.buttons');
+    const bmiPanel     = document.getElementById('bmiPanel');
+    const bmiResultPanel = document.getElementById('bmiResultPanel');
+
+    function showCalc() {
+      calcDisplay.style.display  = '';
+      calcButtons.style.display  = '';
+      bmiPanel.classList.remove('active');
+      bmiResultPanel.classList.remove('active');
+      document.getElementById('heightInput').value = '';
+      document.getElementById('weightInput').value = '';
+    }
+
+    document.getElementById('bmiBtn').addEventListener('click', () => {
+      calcDisplay.style.display  = 'none';
+      calcButtons.style.display  = 'none';
+      bmiResultPanel.classList.remove('active');
+      bmiPanel.classList.add('active');
+      setTimeout(() => document.getElementById('heightInput').focus(), 100);
+    });
+
+    document.getElementById('bmiConfirm').addEventListener('click', () => {
+      const h = parseFloat(document.getElementById('heightInput').value);
+      const w = parseFloat(document.getElementById('weightInput').value);
+      if (!h || !w || h <= 0 || w <= 0 || h > 3 || w > 500) {
+        alert('请输入有效的身高（0.5~3 m）和体重（1~500 kg）');
+        return;
+      }
+      const bmi = w / (h * h);
+      const bmiRounded = Math.round(bmi * 10) / 10;
+
+      document.getElementById('bmiValue').textContent = bmiRounded.toFixed(1);
+
+      const labelEl = document.getElementById('bmiResultLabel');
+      const descEl  = document.getElementById('bmiResultDesc');
+      labelEl.className = 'bmi-result-label';
+      ['range0','range1','range2','range3'].forEach(id => document.getElementById(id).classList.remove('highlight'));
+
+      if (bmi < 18.5) {
+        labelEl.classList.add('thin');
+        labelEl.textContent = '体重过轻';
+        descEl.textContent  = '您的体重偏低，建议适当增加营养摄入，保持均衡饮食，适度运动。';
+        document.getElementById('range0').classList.add('highlight');
+      } else if (bmi < 24) {
+        labelEl.classList.add('normal');
+        labelEl.textContent = '体重正常';
+        descEl.textContent  = '恭喜！您的体重处于健康范围内，请继续保持良好的生活习惯。';
+        document.getElementById('range1').classList.add('highlight');
+      } else if (bmi < 28) {
+        labelEl.classList.add('over');
+        labelEl.textContent = '超重';
+        descEl.textContent  = '您的体重略高于正常范围，建议适当控制饮食，增加有氧运动。';
+        document.getElementById('range2').classList.add('highlight');
+      } else {
+        labelEl.classList.add('obese');
+        labelEl.textContent = '肥胖';
+        descEl.textContent  = '您的体重已超出健康范围，建议咨询医生，制定科学的减重计划。';
+        document.getElementById('range3').classList.add('highlight');
+      }
+
+      bmiPanel.classList.remove('active');
+      bmiResultPanel.classList.add('active');
+    });
+
+    document.getElementById('bmiBack1').addEventListener('click', showCalc);
+    document.getElementById('bmiBack2').addEventListener('click', showCalc);
   </script>
 </body>
 </html>
