@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>生命倒计时</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --bg: #000;
+      --card-bg: #1c1c1e;
+      --card-border: #2c2c2e;
+      --text-primary: #fff;
+      --text-secondary: #ebebf5cc;
+      --text-tertiary: #ebebf599;
+      --separator: #3a3a3c;
+      --accent-green: #30d158;
+      --accent-blue: #0a84ff;
+      --accent-orange: #ff9f0a;
+      --accent-red: #ff453a;
+      --accent-purple: #bf5af2;
+      --font: -apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: var(--font);
+      min-height: 100vh;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 0 40px;
+    }
+
+    /* 顶部标题栏 */
+    .header {
+      width: 100%;
+      max-width: 430px;
+      padding: 56px 20px 12px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+
+    .header-title {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .settings-btn {
+      width: 36px;
+      height: 36px;
+      background: #2c2c2e;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 18px;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .settings-btn:hover { background: #3a3a3c; }
+    .settings-btn:active { background: #444; }
+
+    /* 内容区 */
+    .content {
+      width: 100%;
+      max-width: 430px;
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* 卡片通用 */
+    .card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-label {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      opacity: 0.6;
+    }
+
+    .card-title {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    /* 时间显示块 */
+    .time-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .time-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .time-block {
+      background: rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 10px 6px 8px;
+      text-align: center;
+    }
+
+    .time-num {
+      font-size: 28px;
+      font-weight: 300;
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+
+    .time-unit {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    /* 总时长小标注 */
+    .total-label {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-top: 12px;
+      text-align: right;
+    }
+
+    /* 进度条 */
+    .progress-wrap {
+      margin-top: 14px;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--text-tertiary);
+      margin-bottom: 6px;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 1s linear;
+    }
+
+    /* 正计时 - 绿色 */
+    .card-lived .card-icon { background: rgba(48,209,88,0.18); }
+    .card-lived .time-num  { color: var(--accent-green); }
+    .card-lived .card-label { color: var(--accent-green); }
+    .card-lived .progress-fill { background: linear-gradient(90deg, #30d158, #34c759); }
+
+    /* 退休倒计时 - 橙色 */
+    .card-retire .card-icon { background: rgba(255,159,10,0.18); }
+    .card-retire .time-num  { color: var(--accent-orange); }
+    .card-retire .card-label { color: var(--accent-orange); }
+    .card-retire .progress-fill { background: linear-gradient(90deg, #ff9f0a, #ffcc00); }
+
+    /* 生命倒计时 - 红色 */
+    .card-life .card-icon { background: rgba(255,69,58,0.18); }
+    .card-life .time-num  { color: var(--accent-red); }
+    .card-life .card-label { color: var(--accent-red); }
+    .card-life .progress-fill { background: linear-gradient(90deg, #ff453a, #ff6b6b); }
+
+    /* 大数字展示（总计已活） */
+    .big-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+    .big-stat-num {
+      font-size: 52px;
+      font-weight: 200;
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+    .big-stat-unit {
+      font-size: 14px;
+      color: var(--text-tertiary);
+      font-weight: 400;
+    }
+
+    /* 设置面板遮罩 */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 100;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .overlay.show {
+      display: flex;
+    }
+
+    /* 设置底部抽屉 */
+    .settings-sheet {
+      width: 100%;
+      max-width: 430px;
+      background: #1c1c1e;
+      border-radius: 20px 20px 0 0;
+      padding: 12px 20px 40px;
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .overlay.show .settings-sheet {
+      transform: translateY(0);
+    }
+
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      background: #3a3a3c;
+      border-radius: 2px;
+      margin: 0 auto 20px;
+    }
+
+    .sheet-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .field-group {
+      background: #2c2c2e;
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .field-row {
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      height: 52px;
+      border-bottom: 1px solid #3a3a3c;
+    }
+    .field-row:last-child {
+      border-bottom: none;
+    }
+
+    .field-label {
+      font-size: 15px;
+      font-weight: 500;
+      flex: 1;
+      color: var(--text-primary);
+    }
+
+    .field-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #0a84ff;
+      font-size: 15px;
+      font-family: var(--font);
+      text-align: right;
+      width: 200px;
+    }
+
+    .field-input::-webkit-calendar-picker-indicator {
+      filter: invert(1) opacity(0.5);
+    }
+
+    .sheet-save {
+      width: 100%;
+      height: 52px;
+      background: #0a84ff;
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: background 0.1s, transform 0.08s;
+      margin-top: 8px;
+    }
+    .sheet-save:hover   { background: #0976e3; }
+    .sheet-save:active  { transform: scale(0.97); }
+
+    .sheet-cancel {
+      width: 100%;
+      height: 52px;
+      background: #2c2c2e;
+      color: var(--text-primary);
+      border: none;
+      border-radius: 14px;
+      font-size: 17px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: background 0.1s;
+      margin-top: 8px;
+    }
+    .sheet-cancel:hover  { background: #3a3a3c; }
+
+    /* 脉冲动画（正计时圆点） */
+    @keyframes pulse {
+      0%   { opacity: 1; transform: scale(1); }
+      50%  { opacity: 0.4; transform: scale(0.85); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse 1.6s ease-in-out infinite;
+      margin-right: 4px;
+    }
+
+    /* 过期提示 */
+    .expired-badge {
+      display: inline-block;
+      background: rgba(255,69,58,0.2);
+      color: var(--accent-red);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 顶部标题 -->
+  <div class="header">
+    <div class="header-title">生命时光</div>
+    <button class="settings-btn" id="settingsBtn" title="自定义日期">⚙</button>
+  </div>
+
+  <div class="content">
+
+    <!-- 正计时：已活多长时间 -->
+    <div class="card card-lived" id="cardLived">
+      <div class="card-label">正计时</div>
+      <div class="card-title">
+        <div class="card-icon">🌱</div>
+        <span><span class="live-dot"></span>已经活了</span>
+      </div>
+      <div class="big-stat">
+        <div class="big-stat-num" id="livedDays">—</div>
+        <div class="big-stat-unit">天</div>
+      </div>
+      <div class="time-grid" id="livedGrid">
+        <div class="time-block">
+          <div class="time-num" id="livedY">—</div>
+          <div class="time-unit">年</div>
+        </div>
+        <div class="time-block">
+          <div class="time-num" id="livedMo">—</div>
+          <div class="time-unit">月</div>
+        </div>
+        <div class="time-block">
+          <div class="time-num" id="livedD">—</div>
+          <div class="time-unit">天</div>
+        </div>
+        <div class="time-block">
+          <div class="time-num" id="livedH">—</div>
+          <div class="time-unit">时</div>
+        </div>
+      </div>
+      <div class="time-grid-3" style="margin-top:10px" id="livedGrid2">
+        <div class="time-block">
+          <div class="time-num" id="livedMin">—</div>
+          <div class="time-unit">分</div>
+        </div>
+        <div class="time-block">
+          <div class="time-num" id="livedSec">—</div>
+          <div class="time-unit">秒</div>
+        </div>
+        <div class="time-block">
+          <div class="time-num" id="livedMs">—</div>
+          <div class="time-unit">毫秒</div>
+        </div>
+      </div>
+      <div class="total-label" id="livedTotal">共 — 秒</div>
+    </div>
+
+    <!-- 退休倒计时 -->
+    <div class="card card-retire" id="cardRetire">
+      <div class="card-label">倒计时 · 一</div>
+      <div class="card-title">
+        <div class="card-icon">🏖</div>
+        <span id="retireTitle">距离退休</span>
+      </div>
+      <div class="time-grid" id="retireGrid">
+        <div class="time-block">
+          <div class="time-num" id="retireY">—</div>
+          <div class="time-unit">年</div>
+        </div>
+        <div class="time-block">
+          <div class="time-num" id="retireMo">—</div>
+          <div class="time-unit">月</div>
+        </div>
+        <div class="time-block">
+          <div class="time-num" id="retireD">—</div>
+          <div class="time-unit">天</div>
+        </div>
+        <div class="time-block">
+          <div class="time-num" id="retireH">—</div>
+          <div class="time-unit">时</div>
+        </div>
+      </div>
+      <div class="time-grid-3" style="margin-top:10px">
+        <div class="time-block">
+          <div class="time-num" id="retireMin">—</div>
+          <div class="time-unit">分</div>
+        </div>
+        <div class="time-block">
+          <div class="time-num" id="retireSec">—</div>
+          <div class="time-unit">秒</div>
+        </div>
+        <div class="time-block">
+          <div class="time-num" id="retireMs">—</div>
+          <div class="time-unit">毫秒</div>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-header">
+          <span>工作进度</span>
+          <span id="retirePct">—%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="retireBar" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="total-label" id="retireDate">退休日期：—</div>
+    </div>
+
+    <!-- 生命倒计时 -->
+    <div class="card card-life" id="cardLife">
+      <div class="card-label">倒计时 · 二</div>
+      <div class="card-title">
+        <div class="card-icon">⏳</div>
+        <span id="lifeTitle">距离终点</span>
+      </div>
+      <div class="time-grid" id="lifeGrid">
+        <div class="time-block">
+          <div class="time-num" id="lifeY">—</div>
+          <div class="time-unit">年</div>
+        </div>
+        <div class="time-block">
+          <div class="time-num" id="lifeMo">—</div>
+          <div class="time-unit">月</div>
+        </div>
+        <div class="time-block">
+          <div class="time-num" id="lifeD">—</div>
+          <div class="time-unit">天</div>
+        </div>
+        <div class="time-block">
+          <div class="time-num" id="lifeH">—</div>
+          <div class="time-unit">时</div>
+        </div>
+      </div>
+      <div class="time-grid-3" style="margin-top:10px">
+        <div class="time-block">
+          <div class="time-num" id="lifeMin">—</div>
+          <div class="time-unit">分</div>
+        </div>
+        <div class="time-block">
+          <div class="time-num" id="lifeSec">—</div>
+          <div class="time-unit">秒</div>
+        </div>
+        <div class="time-block">
+          <div class="time-num" id="lifeMs">—</div>
+          <div class="time-unit">毫秒</div>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-header">
+          <span>生命进度</span>
+          <span id="lifePct">—%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="lifeBar" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="total-label" id="lifeDate">预期日期：—</div>
+    </div>
+
+  </div>
+
+  <!-- 设置遮罩 -->
+  <div class="overlay" id="overlay">
+    <div class="settings-sheet" id="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">自定义日期</div>
+
+      <div class="field-group">
+        <div class="field-row">
+          <label class="field-label" for="inputBirth">出生日期和时间</label>
+          <input class="field-input" type="datetime-local" id="inputBirth" />
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-row">
+          <label class="field-label" for="inputRetire">退休日期</label>
+          <input class="field-input" type="date" id="inputRetire" />
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-row">
+          <label class="field-label" for="inputDeath">预期终点日期</label>
+          <input class="field-input" type="date" id="inputDeath" />
+        </div>
+      </div>
+
+      <button class="sheet-save" id="saveBtn">保存</button>
+      <button class="sheet-cancel" id="cancelBtn">取消</button>
+    </div>
+  </div>
+
+  <script>
+    // ===== 默认日期配置 =====
+    // 出生：1996-12-02 06:10:00
+    const DEFAULT_BIRTH = '1996-12-02T06:10';
+    // 退休：63岁生日当天（1996-12-02 + 63年 = 2059-12-02）
+    const DEFAULT_RETIRE = '2059-12-02';
+    // 生命预期：80岁（1996-12-02 + 80年 = 2076-12-02）
+    const DEFAULT_DEATH = '2076-12-02';
+
+    // ===== 状态存储 =====
+    let config = loadConfig();
+
+    function loadConfig() {
+      try {
+        const raw = localStorage.getItem('life_countdown_config');
+        if (raw) return JSON.parse(raw);
+      } catch(e) {}
+      return {
+        birth: DEFAULT_BIRTH,
+        retire: DEFAULT_RETIRE,
+        death: DEFAULT_DEATH
+      };
+    }
+
+    function saveConfig(cfg) {
+      config = cfg;
+      try { localStorage.setItem('life_countdown_config', JSON.stringify(cfg)); } catch(e) {}
+    }
+
+    // ===== 时间工具 =====
+    function getBirthDate() {
+      return new Date(config.birth);
+    }
+    function getRetireDate() {
+      return new Date(config.retire + 'T00:00:00');
+    }
+    function getDeathDate() {
+      return new Date(config.death + 'T00:00:00');
+    }
+
+    // 计算两个日期之间的年月日时分秒
+    function diffFull(from, to) {
+      let ms = to - from;
+      const sign = ms < 0 ? -1 : 1;
+      ms = Math.abs(ms);
+
+      const totalMs  = ms;
+      const totalSec = Math.floor(ms / 1000);
+      const totalMin = Math.floor(totalSec / 60);
+      const totalH   = Math.floor(totalMin / 60);
+      const totalD   = Math.floor(totalH / 24);
+
+      // 年月日（精确）
+      let a = new Date(Math.min(from.getTime(), to.getTime()));
+      let b = new Date(Math.max(from.getTime(), to.getTime()));
+
+      let years = b.getFullYear() - a.getFullYear();
+      let months = b.getMonth() - a.getMonth();
+      let days = b.getDate() - a.getDate();
+
+      if (days < 0) {
+        months--;
+        const prevMonth = new Date(b.getFullYear(), b.getMonth(), 0);
+        days += prevMonth.getDate();
+      }
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
+
+      // 剩余时分秒毫秒
+      const base = new Date(a);
+      base.setFullYear(base.getFullYear() + years);
+      base.setMonth(base.getMonth() + months);
+      base.setDate(base.getDate() + days);
+      let remain = Math.abs(b - base);
+      const hours   = Math.floor(remain / 3600000);
+      remain -= hours * 3600000;
+      const minutes = Math.floor(remain / 60000);
+      remain -= minutes * 60000;
+      const seconds = Math.floor(remain / 1000);
+      const millis  = remain % 1000;
+
+      return { sign, years, months, days, hours, minutes, seconds, millis, totalD, totalSec };
+    }
+
+    function pad(n, len=2) {
+      return String(n).padStart(len, '0');
+    }
+
+    function formatDate(d) {
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    }
+
+    // ===== 渲染函数 =====
+    function updateAll() {
+      const now   = new Date();
+      const birth = getBirthDate();
+      const retire = getRetireDate();
+      const death = getDeathDate();
+
+      // === 正计时：已活多长时间 ===
+      const lived = diffFull(birth, now);
+      document.getElementById('livedY').textContent   = lived.years;
+      document.getElementById('livedMo').textContent  = lived.months;
+      document.getElementById('livedD').textContent   = lived.days;
+      document.getElementById('livedH').textContent   = pad(lived.hours);
+      document.getElementById('livedMin').textContent = pad(lived.minutes);
+      document.getElementById('livedSec').textContent = pad(lived.seconds);
+      document.getElementById('livedMs').textContent  = pad(lived.millis, 3);
+      document.getElementById('livedDays').textContent = lived.totalD.toLocaleString();
+      document.getElementById('livedTotal').textContent = `共 ${lived.totalSec.toLocaleString()} 秒`;
+
+      // === 退休倒计时 ===
+      const retireEl = document.getElementById('retireTitle');
+      const retireDiff = diffFull(now, retire);
+      if (retireDiff.sign >= 0) {
+        retireEl.innerHTML = '距离退休';
+        document.getElementById('retireY').textContent   = retireDiff.years;
+        document.getElementById('retireMo').textContent  = retireDiff.months;
+        document.getElementById('retireD').textContent   = retireDiff.days;
+        document.getElementById('retireH').textContent   = pad(retireDiff.hours);
+        document.getElementById('retireMin').textContent = pad(retireDiff.minutes);
+        document.getElementById('retireSec').textContent = pad(retireDiff.seconds);
+        document.getElementById('retireMs').textContent  = pad(retireDiff.millis, 3);
+        // 进度
+        const workTotal = retire - birth;
+        const workDone  = now - birth;
+        const pct = Math.min(100, Math.max(0, (workDone / workTotal * 100)));
+        document.getElementById('retirePct').textContent = pct.toFixed(2) + '%';
+        document.getElementById('retireBar').style.width = pct + '%';
+      } else {
+        retireEl.innerHTML = '已退休 <span class="expired-badge">已到达</span>';
+        const r = diffFull(retire, now);
+        document.getElementById('retireY').textContent   = r.years;
+        document.getElementById('retireMo').textContent  = r.months;
+        document.getElementById('retireD').textContent   = r.days;
+        document.getElementById('retireH').textContent   = pad(r.hours);
+        document.getElementById('retireMin').textContent = pad(r.minutes);
+        document.getElementById('retireSec').textContent = pad(r.seconds);
+        document.getElementById('retireMs').textContent  = pad(r.millis, 3);
+        document.getElementById('retirePct').textContent = '100.00%';
+        document.getElementById('retireBar').style.width = '100%';
+      }
+      document.getElementById('retireDate').textContent = `退休日期：${formatDate(retire)}`;
+
+      // === 生命倒计时 ===
+      const lifeEl = document.getElementById('lifeTitle');
+      const lifeDiff = diffFull(now, death);
+      if (lifeDiff.sign >= 0) {
+        lifeEl.innerHTML = '距离终点';
+        document.getElementById('lifeY').textContent   = lifeDiff.years;
+        document.getElementById('lifeMo').textContent  = lifeDiff.months;
+        document.getElementById('lifeD').textContent   = lifeDiff.days;
+        document.getElementById('lifeH').textContent   = pad(lifeDiff.hours);
+        document.getElementById('lifeMin').textContent = pad(lifeDiff.minutes);
+        document.getElementById('lifeSec').textContent = pad(lifeDiff.seconds);
+        document.getElementById('lifeMs').textContent  = pad(lifeDiff.millis, 3);
+        const lifeTotal = death - birth;
+        const lifeDone  = now - birth;
+        const pct = Math.min(100, Math.max(0, (lifeDone / lifeTotal * 100)));
+        document.getElementById('lifePct').textContent = pct.toFixed(2) + '%';
+        document.getElementById('lifeBar').style.width = pct + '%';
+      } else {
+        lifeEl.innerHTML = '已超期 <span class="expired-badge">已到达</span>';
+        const r = diffFull(death, now);
+        document.getElementById('lifeY').textContent   = r.years;
+        document.getElementById('lifeMo').textContent  = r.months;
+        document.getElementById('lifeD').textContent   = r.days;
+        document.getElementById('lifeH').textContent   = pad(r.hours);
+        document.getElementById('lifeMin').textContent = pad(r.minutes);
+        document.getElementById('lifeSec').textContent = pad(r.seconds);
+        document.getElementById('lifeMs').textContent  = pad(r.millis, 3);
+        document.getElementById('lifePct').textContent = '100.00%';
+        document.getElementById('lifeBar').style.width = '100%';
+      }
+      document.getElementById('lifeDate').textContent = `预期日期：${formatDate(death)}`;
+    }
+
+    // ===== 设置面板 =====
+    const overlay  = document.getElementById('overlay');
+    const sheet    = document.getElementById('sheet');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const inputBirth  = document.getElementById('inputBirth');
+    const inputRetire = document.getElementById('inputRetire');
+    const inputDeath  = document.getElementById('inputDeath');
+
+    settingsBtn.addEventListener('click', () => {
+      // 填入当前配置
+      inputBirth.value  = config.birth;
+      inputRetire.value = config.retire;
+      inputDeath.value  = config.death;
+      overlay.classList.add('show');
+    });
+
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) closeSheet();
+    });
+
+    document.getElementById('cancelBtn').addEventListener('click', closeSheet);
+
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      const birth  = inputBirth.value;
+      const retire = inputRetire.value;
+      const death  = inputDeath.value;
+
+      if (!birth) { alert('请填写出生日期'); return; }
+      if (!retire) { alert('请填写退休日期'); return; }
+      if (!death) { alert('请填写预期终点日期'); return; }
+
+      const bDate = new Date(birth);
+      const rDate = new Date(retire + 'T00:00:00');
+      const dDate = new Date(death + 'T00:00:00');
+
+      if (isNaN(bDate.getTime())) { alert('出生日期格式错误'); return; }
+      if (isNaN(rDate.getTime())) { alert('退休日期格式错误'); return; }
+      if (isNaN(dDate.getTime())) { alert('终点日期格式错误'); return; }
+      if (rDate <= bDate) { alert('退休日期必须晚于出生日期'); return; }
+      if (dDate <= bDate) { alert('终点日期必须晚于出生日期'); return; }
+
+      saveConfig({ birth, retire, death });
+      updateAll();
+      closeSheet();
+    });
+
+    function closeSheet() {
+      overlay.classList.remove('show');
+    }
+
+    // ===== 启动主循环 =====
+    updateAll();
+    setInterval(updateAll, 50); // 50ms 刷新，毫秒跳动流畅
+  </script>
+
+</body>
+</html>
